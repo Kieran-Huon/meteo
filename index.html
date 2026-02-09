@@ -25,7 +25,6 @@
       background:#0b1220;
     }
 
-    /* --- Animated background canvas zones --- */
     .bg{
       position:fixed; inset:0;
       background: radial-gradient(1000px 600px at 20% 10%, rgba(255,255,255,.12), transparent 60%),
@@ -34,7 +33,6 @@
       transition: filter .35s ease, background .35s ease;
     }
 
-    /* Theme variants */
     body[data-theme="clear"] .bg{
       background: radial-gradient(900px 600px at 25% 20%, rgba(255,220,120,.35), transparent 60%),
                   radial-gradient(900px 650px at 80% 40%, rgba(120,200,255,.18), transparent 60%),
@@ -65,11 +63,9 @@
       filter: contrast(1.1) saturate(.85);
     }
 
-    /* --- Effects layers --- */
     .fx{ position:fixed; inset:0; pointer-events:none; }
     .hidden{ display:none; }
 
-    /* Clouds */
     .clouds{ opacity:.85; }
     .cloud{
       position:absolute;
@@ -96,7 +92,6 @@
       to{ transform: translateX(calc(100vw + 420px)); }
     }
 
-    /* Rain */
     .rain{ opacity:.9; }
     .drop{
       position:absolute; top:-20px;
@@ -108,7 +103,6 @@
       to{ transform: translateY(calc(100vh + 40px)); }
     }
 
-    /* Snow */
     .snow{ opacity:.95; }
     .flake{
       position:absolute; top:-20px;
@@ -122,7 +116,6 @@
       to{ transform: translateY(calc(100vh + 40px)); }
     }
 
-    /* Lightning */
     .lightning{
       position:absolute; inset:0;
       opacity:0;
@@ -138,7 +131,6 @@
       93% { opacity:0; }
     }
 
-    /* Sun */
     .sun{
       position:absolute; right:8%; top:10%;
       width:140px; height:140px;
@@ -153,7 +145,6 @@
       50%{ transform: scale(1.04); }
     }
 
-    /* --- UI card --- */
     .app{
       position:relative;
       width:min(920px, 94vw);
@@ -161,6 +152,7 @@
       grid-template-columns: 1.1fr .9fr;
       gap:18px;
       padding:18px;
+      z-index:2;
     }
     @media (max-width: 820px){
       .app{ grid-template-columns: 1fr; }
@@ -221,43 +213,20 @@
     button:hover{ background: rgba(255,255,255,.18); }
     button:active{ transform: scale(.98); }
 
-    .main{
-      display:grid;
-      gap:14px;
-    }
+    .main{ display:grid; gap:14px; }
     .hero{
-      display:flex;
-      justify-content:space-between;
-      gap:14px;
-      align-items:flex-start;
+      display:flex; justify-content:space-between; gap:14px; align-items:flex-start;
     }
-    .city{
-      font-size:24px;
-      font-weight:800;
-      line-height:1.1;
-    }
+    .city{ font-size:24px; font-weight:800; line-height:1.1; }
     .meta{
       margin-top:6px;
       color:var(--muted);
       font-size:13px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .temp{
-      font-size:54px;
-      font-weight:900;
-      letter-spacing:-1px;
-    }
-    .desc{
-      margin-top:2px;
-      color:var(--muted);
-      text-transform: capitalize;
-    }
-    .chips{
       display:flex; gap:10px; flex-wrap:wrap;
-      margin-top:12px;
     }
+    .temp{ font-size:54px; font-weight:900; letter-spacing:-1px; }
+    .desc{ margin-top:2px; color:var(--muted); text-transform: capitalize; }
+    .chips{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
     .chip{
       border:1px solid rgba(255,255,255,.16);
       background: rgba(0,0,0,.12);
@@ -280,12 +249,9 @@
     .status{
       margin-top:10px;
       font-size:13px;
-      color: rgba(255,255,255,.8);
+      color: rgba(255,255,255,.85);
     }
-    .error{
-      color: rgba(255,170,170,.95);
-    }
-
+    .error{ color: rgba(255,170,170,.95); }
     .hint{
       margin-top:12px;
       font-size:12px;
@@ -293,25 +259,20 @@
     }
   </style>
 </head>
+
 <body data-theme="clouds">
   <div class="bg"></div>
 
   <!-- FX layers -->
   <div class="fx clouds hidden" id="fxClouds">
-    <div class="cloud" style="top:14%; animation-duration: 36s; opacity:.95;"></div>
-    <div class="cloud" style="top:24%; animation-duration: 46s; opacity:.75; width:380px;"></div>
-    <div class="cloud" style="top:38%; animation-duration: 54s; opacity:.6; width:420px;"></div>
+    <div class="cloud" style="top:14%; animation-duration:36s; opacity:.95;"></div>
+    <div class="cloud" style="top:24%; animation-duration:46s; opacity:.75; width:380px;"></div>
+    <div class="cloud" style="top:38%; animation-duration:54s; opacity:.6; width:420px;"></div>
   </div>
-
   <div class="fx rain hidden" id="fxRain"></div>
   <div class="fx snow hidden" id="fxSnow"></div>
-  <div class="fx storm hidden" id="fxStorm">
-    <div class="lightning"></div>
-  </div>
-
-  <div class="fx clear hidden" id="fxSun">
-    <div class="sun"></div>
-  </div>
+  <div class="fx storm hidden" id="fxStorm"><div class="lightning"></div></div>
+  <div class="fx clear hidden" id="fxSun"><div class="sun"></div></div>
 
   <div class="app">
     <div class="card">
@@ -343,7 +304,7 @@
         </div>
 
         <div class="status" id="status"></div>
-        <div class="hint">Astuce : essaie “Reykjavik”, “Tokyo”, “Montréal”.</div>
+        <div class="hint">Tu peux chercher une ville, ou cliquer sur 📍.</div>
       </div>
     </div>
 
@@ -360,9 +321,6 @@
   </div>
 
   <script>
-    // 1) Mets ta clé OpenWeatherMap ici
-    const API_KEY = "fa691680d00ee9f7cdbcfc2db3c2e449";
-
     const els = {
       cityInput: document.getElementById("cityInput"),
       searchBtn: document.getElementById("searchBtn"),
@@ -396,14 +354,10 @@
       els.status.classList.toggle("error", isError);
     }
 
-    function kToC(k){ return k - 273.15; }
-
     function fmtTemp(c){ return `${Math.round(c)}°`; }
 
     function fmtTimeFromUnix(unix, tzOffsetSec){
-      // unix: seconds UTC ; tzOffsetSec: offset from UTC for that city
       const date = new Date((unix + tzOffsetSec) * 1000);
-      // We display time as HH:MM (local to the city using offset)
       const hh = String(date.getUTCHours()).padStart(2,"0");
       const mm = String(date.getUTCMinutes()).padStart(2,"0");
       return `${hh}:${mm}`;
@@ -411,18 +365,13 @@
 
     function fmtKm(m){ return `${(m/1000).toFixed(1)} km`; }
 
-    function themeFromWeather(main, id){
-      // main: Clear/Clouds/Rain/Snow/Thunderstorm/Drizzle/Mist etc.
-      // id: OpenWeather condition id (helps refine)
+    function themeFromWeather(main){
       const m = (main || "").toLowerCase();
-
       if (m.includes("thunder")) return "storm";
       if (m.includes("snow")) return "snow";
       if (m.includes("rain") || m.includes("drizzle")) return "rain";
       if (m.includes("clear")) return "clear";
       if (m.includes("cloud")) return "clouds";
-
-      // mist/fog/haze/smoke => clouds
       return "clouds";
     }
 
@@ -437,12 +386,11 @@
       show(els.fxSnow, theme === "snow");
       show(els.fxStorm, theme === "storm");
 
-      // Create particles only when needed
       if(theme === "rain") spawnRain(160);
-      if(theme !== "rain") els.fxRain.innerHTML = "";
+      else els.fxRain.innerHTML = "";
 
       if(theme === "snow") spawnSnow(80);
-      if(theme !== "snow") els.fxSnow.innerHTML = "";
+      else els.fxSnow.innerHTML = "";
     }
 
     function spawnRain(n){
@@ -451,14 +399,10 @@
       for(let i=0;i<n;i++){
         const d = document.createElement("div");
         d.className = "drop";
-        const left = Math.random()*w;
-        const dur = 0.8 + Math.random()*0.9;
-        const delay = Math.random()*1.6;
-        const opacity = 0.35 + Math.random()*0.55;
-        d.style.left = left + "px";
-        d.style.animationDuration = dur + "s";
-        d.style.animationDelay = (-delay) + "s";
-        d.style.opacity = opacity;
+        d.style.left = (Math.random()*w) + "px";
+        d.style.animationDuration = (0.8 + Math.random()*0.9) + "s";
+        d.style.animationDelay = (-(Math.random()*1.6)) + "s";
+        d.style.opacity = (0.35 + Math.random()*0.55);
         d.style.height = (12 + Math.random()*22) + "px";
         els.fxRain.appendChild(d);
       }
@@ -470,22 +414,13 @@
       for(let i=0;i<n;i++){
         const f = document.createElement("div");
         f.className = "flake";
-        const left = Math.random()*w;
-        const dur = 4.5 + Math.random()*5.5;
-        const delay = Math.random()*3;
+        f.style.left = (Math.random()*w) + "px";
+        f.style.animationDuration = (4.5 + Math.random()*5.5) + "s";
+        f.style.animationDelay = (-(Math.random()*3)) + "s";
         const size = 3 + Math.random()*6;
-        const drift = (Math.random()*2 - 1) * 60;
-
-        f.style.left = left + "px";
-        f.style.animationDuration = dur + "s";
-        f.style.animationDelay = (-delay) + "s";
         f.style.width = size + "px";
         f.style.height = size + "px";
-        f.style.transform = `translateX(${drift}px)`;
-        f.style.opacity = 0.35 + Math.random()*0.6;
-
-        // slight sideways motion via CSS variable-less trick: add random translateX in keyframes-like by nesting
-        // (kept simple for 1-file setup)
+        f.style.opacity = (0.35 + Math.random()*0.6);
         els.fxSnow.appendChild(f);
       }
     }
@@ -494,53 +429,35 @@
       const chips = [];
       const { main, wind, clouds } = data;
 
-      if(clouds && typeof clouds.all === "number") chips.push({label:"Nuages", value: `${clouds.all}%`});
-      if(wind && typeof wind.speed === "number") chips.push({label:"Vent", value: `${Math.round(wind.speed)} m/s`});
-      if(main && typeof main.temp_min === "number") chips.push({label:"Min", value: fmtTemp(kToC(main.temp_min))});
-      if(main && typeof main.temp_max === "number") chips.push({label:"Max", value: fmtTemp(kToC(main.temp_max))});
+      if(clouds && typeof clouds.all === "number") chips.push({label:"Nuages", value:`${clouds.all}%`});
+      if(wind && typeof wind.speed === "number") chips.push({label:"Vent", value:`${Math.round(wind.speed)} m/s`});
+      if(main && typeof main.temp_min === "number") chips.push({label:"Min", value:fmtTemp(main.temp_min)});
+      if(main && typeof main.temp_max === "number") chips.push({label:"Max", value:fmtTemp(main.temp_max)});
 
       els.chips.innerHTML = chips.map(c => `<div class="chip">${c.label} : <b>${c.value}</b></div>`).join("");
     }
 
-    async function fetchWeatherByCity(city){
-      const url = new URL("https://api.openweathermap.org/data/2.5/weather");
-      url.searchParams.set("q", city);
-      url.searchParams.set("appid", API_KEY);
-      url.searchParams.set("lang", "fr");
+    async function callApi(params){
+      const url = new URL("/api/weather", location.origin);
+      Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
 
-      const res = await fetch(url);
-      if(!res.ok){
-        const txt = await res.text().catch(()=> "");
-        throw new Error(`Erreur API (${res.status}) ${txt}`);
-      }
-      return res.json();
-    }
-
-    async function fetchWeatherByCoords(lat, lon){
-      const url = new URL("https://api.openweathermap.org/data/2.5/weather");
-      url.searchParams.set("lat", lat);
-      url.searchParams.set("lon", lon);
-      url.searchParams.set("appid", API_KEY);
-      url.searchParams.set("lang", "fr");
-
-      const res = await fetch(url);
-      if(!res.ok) throw new Error(`Erreur API (${res.status})`);
-      return res.json();
+      const res = await fetch(url.toString());
+      const txt = await res.text().catch(()=> "");
+      if(!res.ok) throw new Error(`${res.status} ${txt}`);
+      return JSON.parse(txt);
     }
 
     function updateUI(data){
       const w = data.weather?.[0];
-      const theme = themeFromWeather(w?.main, w?.id);
+      const theme = themeFromWeather(w?.main);
       applyTheme(theme);
-
-      const tempC = kToC(data.main.temp);
-      const feelsC = kToC(data.main.feels_like);
 
       els.cityName.textContent = data.name ?? "—";
       els.country.textContent = data.sys?.country ? `Pays: ${data.sys.country}` : "—";
       els.desc.textContent = w?.description ?? "—";
-      els.temp.textContent = fmtTemp(tempC);
-      els.feels.textContent = `Ressenti ${fmtTemp(feelsC)}`;
+
+      els.temp.textContent = fmtTemp(data.main.temp);
+      els.feels.textContent = `Ressenti ${fmtTemp(data.main.feels_like)}`;
 
       const tz = data.timezone ?? 0;
       const now = Math.floor(Date.now()/1000);
@@ -560,60 +477,66 @@
     async function searchCity(){
       const city = els.cityInput.value.trim();
       if(!city) return setStatus("Entre une ville 🙂", true);
-      if(API_KEY === "TON_API_KEY_ICI") return setStatus("Ajoute ta clé OpenWeatherMap dans le code (API_KEY).", true);
 
       setStatus("Chargement…");
       try{
-        const data = await fetchWeatherByCity(city);
+        const data = await callApi({ q: city });
         updateUI(data);
         setStatus("");
       }catch(e){
         console.error(e);
-        setStatus("Ville introuvable ou problème API. Vérifie l’orthographe (ex: Paris, FR).", true);
+        setStatus("Erreur: " + (e.message || "ville introuvable"), true);
       }
     }
 
     function useGeolocation(){
-      if(API_KEY === "TON_API_KEY_ICI") return setStatus("Ajoute ta clé OpenWeatherMap dans le code (API_KEY).", true);
-
       if(!navigator.geolocation){
         return setStatus("Géolocalisation non supportée par ton navigateur.", true);
       }
+
       setStatus("Localisation…");
-      navigator.geolocation.getCurrentPosition(async (pos)=>{
-        try{
-          setStatus("Chargement…");
-          const data = await fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude);
-          updateUI(data);
-          setStatus("");
-        }catch(e){
-          console.error(e);
-          setStatus("Impossible de récupérer la météo via ta position.", true);
-        }
-      }, ()=>{
-        setStatus("Autorisation refusée ou position indisponible.", true);
-      }, { enableHighAccuracy:false, timeout: 8000 });
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try{
+            setStatus("Chargement…");
+            const data = await callApi({
+              lat: String(pos.coords.latitude),
+              lon: String(pos.coords.longitude),
+            });
+            updateUI(data);
+            setStatus("");
+          }catch(e){
+            console.error(e);
+            setStatus("Erreur OpenWeather: " + (e.message || "inconnue"), true);
+          }
+        },
+        (err) => {
+          console.error(err);
+          let msg = "Géolocalisation: erreur inconnue.";
+          if(err.code === 1) msg = "Géolocalisation refusée (permission).";
+          if(err.code === 2) msg = "Position indisponible.";
+          if(err.code === 3) msg = "Timeout géolocalisation.";
+          setStatus(msg, true);
+        },
+        { enableHighAccuracy:false, timeout: 12000, maximumAge: 60000 }
+      );
     }
 
-    // Events
     els.searchBtn.addEventListener("click", searchCity);
     els.cityInput.addEventListener("keydown", (e)=>{ if(e.key === "Enter") searchCity(); });
     els.geoBtn.addEventListener("click", useGeolocation);
 
-    // Default city
-    (async function boot(){
-      els.cityInput.value = "Paris";
-      // small default theme vibe before first call
-      applyTheme("clouds");
-      setStatus("Prêt 🙂 Cherche une ville.");
-    })();
-
-    // Keep particles aligned after resize
     window.addEventListener("resize", ()=>{
       const theme = document.body.dataset.theme;
       if(theme === "rain") spawnRain(160);
       if(theme === "snow") spawnSnow(80);
     });
+
+    (function boot(){
+      els.cityInput.value = "Paris";
+      applyTheme("clouds");
+      setStatus("Prêt 🙂 Recherche une ville, ou clique sur 📍.");
+    })();
   </script>
 </body>
 </html>
