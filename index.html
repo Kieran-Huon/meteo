@@ -218,54 +218,6 @@
     }
     .xbtn:hover{ background: rgba(255,255,255,.12); }
 
-    /* 7 days (nice cards + emoji) */
-    .daysGrid{
-      display:flex;
-      gap:10px;
-      overflow:auto;
-      padding-bottom:6px;
-    }
-    .day{
-      min-width: 132px;
-      padding:12px;
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.10);
-    }
-    .dayTop{
-      display:flex; justify-content:space-between; align-items:baseline;
-      margin-bottom:10px;
-    }
-    .day .d{ font-weight:900; font-size:13px; text-transform:capitalize; }
-    .day .m{ color:var(--muted); font-size:12px; }
-    .dayMid{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:10px;
-    }
-    .dayEmoji{
-      width:44px; height:44px; border-radius:16px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      display:grid; place-items:center;
-      font-size:24px;
-      flex:0 0 auto;
-    }
-    .dayTemp{
-      text-align:right;
-      flex:1;
-    }
-    .dayTemp .avg{
-      font-size:22px;
-      font-weight:1000;
-      letter-spacing:-.5px;
-      line-height:1;
-    }
-    .dayTemp .mm{
-      margin-top:6px;
-      color: rgba(255,255,255,.75);
-      font-size:12px;
-    }
-
     /* Chart */
     .chartBox{
       position:relative;
@@ -281,7 +233,7 @@
     .chartHead .title{ font-weight:900; }
     canvas{
       width:100%;
-      height:240px;
+      height:300px; /* graph bigger */
       display:block;
     }
     .tooltip{
@@ -297,6 +249,100 @@
       white-space:nowrap;
     }
     .tooltip.hidden{ display:none; }
+
+    /* 7 days: compact + slider */
+    .daysBox{
+      padding:14px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      background: rgba(0,0,0,.10);
+      display:grid;
+      gap:10px;
+    }
+    .daysHeader{
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+    }
+    .daysHeader .title{ font-weight:900; }
+
+    .daysViewport{
+      display:flex;
+      align-items:stretch;
+      gap:10px;
+    }
+    .navBtn{
+      width:42px;
+      border-radius: 14px;
+      padding:10px 0;
+      display:grid; place-items:center;
+      flex:0 0 auto;
+    }
+    .navBtn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      transform:none;
+    }
+
+    .daysTrack{
+      flex:1;
+      display:flex;
+      gap:10px;
+      overflow-x:auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom:6px;
+      scrollbar-width: thin;
+    }
+    .daysTrack::-webkit-scrollbar{ height: 8px; }
+    .daysTrack::-webkit-scrollbar-thumb{
+      background: rgba(255,255,255,.14);
+      border-radius: 999px;
+    }
+    .day{
+      scroll-snap-align: start;
+      flex: 0 0 30%;     /* ~3 cards visible */
+      min-width: 190px;  /* safety */
+      padding:12px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.10);
+    }
+    @media (max-width: 980px){
+      .day{ flex-basis: 70%; min-width: 240px; } /* on mobile swipe 1 by 1-ish */
+    }
+
+    .dayTop{
+      display:flex; justify-content:space-between; align-items:baseline;
+      margin-bottom:10px;
+    }
+    .day .d{ font-weight:900; font-size:13px; text-transform:capitalize; }
+    .day .m{ color:var(--muted); font-size:12px; }
+    .dayMid{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+    }
+    .dayEmoji{
+      width:42px; height:42px; border-radius:16px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      display:grid; place-items:center;
+      font-size:22px;
+      flex:0 0 auto;
+    }
+    .dayTemp{
+      text-align:right;
+      flex:1;
+    }
+    .dayTemp .avg{
+      font-size:18px;
+      font-weight:1000;
+      letter-spacing:-.3px;
+      line-height:1;
+    }
+    .dayTemp .mm{
+      margin-top:6px;
+      color: rgba(255,255,255,.75);
+      font-size:12px;
+    }
 
     .status{
       padding:10px 12px;
@@ -341,7 +387,6 @@
     <aside class="sidebar glass">
       <div class="logo">☁️</div>
 
-      <!-- Pages -->
       <div class="sbtn active" data-page="dashboard" title="Dashboard">🏠</div>
       <div class="sbtn" data-page="map" title="Carte">🗺️</div>
 
@@ -352,7 +397,6 @@
     </aside>
 
     <main class="main glass">
-      <!-- TOPBAR (shared) -->
       <div class="topbar glass">
         <div class="search">
           <input id="cityInput" placeholder="Rechercher une ville (ex: Paris, Montréal…)" autocomplete="off" />
@@ -412,12 +456,18 @@
               <div class="favList" id="favList"></div>
             </div>
 
-            <div class="favBox">
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-                <div style="font-weight:900">7 prochains jours</div>
+            <!-- NEW compact 7 days with slider -->
+            <div class="daysBox">
+              <div class="daysHeader">
+                <div class="title">7 prochains jours</div>
                 <div class="pill" id="daysHint">—</div>
               </div>
-              <div style="margin-top:10px" class="daysGrid" id="daysGrid"></div>
+
+              <div class="daysViewport">
+                <button class="navBtn" id="daysPrev" title="Précédent">◀</button>
+                <div class="daysTrack" id="daysGrid"></div>
+                <button class="navBtn" id="daysNext" title="Suivant">▶</button>
+              </div>
             </div>
           </section>
         </div>
@@ -491,14 +541,12 @@
     const $ = (id) => document.getElementById(id);
 
     const els = {
-      // topbar
       cityInput: $("cityInput"),
       searchBtn: $("searchBtn"),
       geoBtn: $("geoBtn"),
       favBtn: $("favBtn"),
       pillLocal: $("pillLocal"),
 
-      // current
       currentEmoji: $("currentEmoji"),
       cityName: $("cityName"),
       metaLine: $("metaLine"),
@@ -506,7 +554,6 @@
       temp: $("temp"),
       feels: $("feels"),
 
-      // stats
       humidity: $("humidity"),
       wind: $("wind"),
       pressure: $("pressure"),
@@ -514,23 +561,20 @@
       sunrise: $("sunrise"),
       sunset: $("sunset"),
 
-      // status
       status: $("status"),
 
-      // favs
       favList: $("favList"),
       favCount: $("favCount"),
 
-      // days
       daysGrid: $("daysGrid"),
       daysHint: $("daysHint"),
+      daysPrev: $("daysPrev"),
+      daysNext: $("daysNext"),
 
-      // chart
       chart: $("tempChart"),
       chartHint: $("chartHint"),
       chartTooltip: $("chartTooltip"),
 
-      // map info
       mapSelection: $("mapSelection"),
       mapWeather: $("mapWeather"),
       mapDays: $("mapDays"),
@@ -580,7 +624,6 @@
     }
 
     function wcToEmoji(code){
-      // Open-Meteo weathercode
       if(code === 0) return "☀️";
       if([1,2,3].includes(code)) return "⛅";
       if([45,48].includes(code)) return "🌫️";
@@ -679,20 +722,20 @@
     }
 
     // -----------------------------
-    // State + live clock
+    // State + live clock + days pager
     // -----------------------------
     const STATE = {
-      current: null,     // OpenWeather current (via /api/weather)
-      forecast: null,    // Open-Meteo forecast (via /api/forecast)
-      tzOffsetSec: 0,    // OpenWeather timezone offset seconds
+      current: null,
+      forecast: null,
+      tzOffsetSec: 0,
       clockTimer: null,
 
-      // chart hover
       chartPoints: null,
 
-      // map
       map: null,
       mapMarker: null,
+
+      daysStepPx: 0, // computed on first render
     };
 
     function startLiveClock(){
@@ -704,13 +747,12 @@
         const localTime = fmtTimeFromUnix(now, STATE.tzOffsetSec || 0);
         els.pillLocal.textContent = `🕒 ${localTime}`;
 
-        // metaLine keeps country + time
         const country = STATE.current.sys?.country ?? "—";
         els.metaLine.textContent = `${country} • Heure locale ${localTime}`;
       };
 
       tick();
-      STATE.clockTimer = setInterval(tick, 30_000); // update every 30s
+      STATE.clockTimer = setInterval(tick, 30_000);
     }
 
     function updateCurrentUI(data){
@@ -718,9 +760,7 @@
       STATE.tzOffsetSec = data.timezone ?? 0;
 
       const w = data.weather?.[0];
-      const emoji = owToEmoji(w?.main, w?.description);
-
-      els.currentEmoji.textContent = emoji;
+      els.currentEmoji.textContent = owToEmoji(w?.main, w?.description);
 
       const now = Math.floor(Date.now()/1000);
       const localTime = fmtTimeFromUnix(now, STATE.tzOffsetSec);
@@ -742,6 +782,14 @@
       els.sunset.textContent = data.sys?.sunset ? fmtTimeFromUnix(data.sys.sunset, STATE.tzOffsetSec) : "—";
 
       startLiveClock();
+    }
+
+    function updateDaysNavButtons(){
+      const el = els.daysGrid;
+      const max = el.scrollWidth - el.clientWidth;
+      const x = el.scrollLeft;
+      els.daysPrev.disabled = x <= 2;
+      els.daysNext.disabled = x >= max - 2;
     }
 
     function render7Days(forecast){
@@ -775,7 +823,6 @@
             <div class="d">${day}</div>
             <div class="m">${dd}</div>
           </div>
-
           <div class="dayMid">
             <div class="dayEmoji">${wcToEmoji(wc[i])}</div>
             <div class="dayTemp">
@@ -786,20 +833,32 @@
         `;
         els.daysGrid.appendChild(el);
       }
+
+      // compute "page" scroll: 3 cards at a time
+      requestAnimationFrame(() => {
+        const first = els.daysGrid.querySelector(".day");
+        if(first){
+          const style = getComputedStyle(els.daysGrid);
+          const gap = parseFloat(style.columnGap || style.gap || "10") || 10;
+          STATE.daysStepPx = (first.getBoundingClientRect().width + gap) * 3;
+        }else{
+          STATE.daysStepPx = els.daysGrid.clientWidth;
+        }
+        updateDaysNavButtons();
+      });
     }
 
     // -----------------------------
-    // Chart (unchanged logic + hover tooltip) + Y labels
+    // Chart + tooltip
     // -----------------------------
     function drawTempChart(forecast){
       const h = forecast.hourly;
       const canvas = els.chart;
       const ctx = canvas.getContext("2d");
 
-      // retina
       const dpr = window.devicePixelRatio || 1;
       const cssW = canvas.clientWidth || 900;
-      const cssH = 240;
+      const cssH = 300;
       canvas.style.height = cssH + "px";
       canvas.width = Math.floor(cssW * dpr);
       canvas.height = Math.floor(cssH * dpr);
@@ -884,7 +943,6 @@
       });
       ctx.stroke();
 
-      // points + store for hover
       const points = temps.map((t,i) => ({ i, t, x: xFor(i), y: yFor(t), time: times[i] }));
 
       ctx.fillStyle = "rgba(255,255,255,.92)";
@@ -932,7 +990,6 @@
         renderFavs();
         setStatus("");
 
-        // if map exists, update view/marker
         if(STATE.map) setMapMarker(lat, lon, current.name);
       }catch(e){
         console.error(e);
@@ -994,7 +1051,6 @@
         b.classList.toggle("active", b.dataset.page === name);
       });
 
-      // lazy init map
       if(name === "map") initMapOnce();
       if(name !== "map") hideTooltip();
     }
@@ -1016,7 +1072,6 @@
         attribution: "&copy; OpenStreetMap"
       }).addTo(map);
 
-      // click to load weather
       map.on("click", async (e) => {
         const { lat, lng } = e.latlng;
         els.mapSelection.textContent = `Lat ${lat.toFixed(4)}, Lon ${lng.toFixed(4)}`;
@@ -1057,7 +1112,6 @@
         }
       });
 
-      // if we already have a current city loaded, align marker
       if(STATE.current?.coord){
         setMapMarker(STATE.current.coord.lat, STATE.current.coord.lon, STATE.current.name);
         map.setView([STATE.current.coord.lat, STATE.current.coord.lon], 8);
@@ -1079,6 +1133,21 @@
     }
 
     // -----------------------------
+    // Days slider controls
+    // -----------------------------
+    function scrollDaysBy(dir){
+      const step = STATE.daysStepPx || els.daysGrid.clientWidth;
+      els.daysGrid.scrollBy({ left: dir * step, behavior: "smooth" });
+    }
+
+    els.daysPrev.addEventListener("click", () => scrollDaysBy(-1));
+    els.daysNext.addEventListener("click", () => scrollDaysBy(1));
+
+    els.daysGrid.addEventListener("scroll", () => {
+      updateDaysNavButtons();
+    }, { passive:true });
+
+    // -----------------------------
     // Events
     // -----------------------------
     els.searchBtn.addEventListener("click", () => loadByCity(els.cityInput.value.trim()));
@@ -1088,19 +1157,22 @@
     els.geoBtn.addEventListener("click", useGeolocation);
     els.favBtn.addEventListener("click", addCurrentToFav);
 
-    // sidebar buttons
     document.querySelectorAll(".sbtn[data-page]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const p = btn.dataset.page;
-        // pages "bientôt" still open placeholders
-        setPage(p);
-      });
+      btn.addEventListener("click", () => setPage(btn.dataset.page));
     });
 
-    // resize chart
     window.addEventListener("resize", () => {
       if(STATE.forecast) drawTempChart(STATE.forecast);
       if(STATE.map) setTimeout(() => STATE.map.invalidateSize(), 50);
+
+      // recompute days step for 3 cards
+      const first = els.daysGrid.querySelector(".day");
+      if(first){
+        const style = getComputedStyle(els.daysGrid);
+        const gap = parseFloat(style.columnGap || style.gap || "10") || 10;
+        STATE.daysStepPx = (first.getBoundingClientRect().width + gap) * 3;
+      }
+      updateDaysNavButtons();
     });
 
     // chart tooltip hover
