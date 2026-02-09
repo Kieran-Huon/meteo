@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Weather Dashboard</title>
 
-  <!-- Leaflet (page Carte) -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -85,14 +84,13 @@
     }
     .spacer{ flex:1; }
 
-    /* Main layout shell */
+    /* Main */
     .main{
       padding:16px;
       display:grid;
       gap:16px;
     }
 
-    /* Topbar */
     .topbar{ padding:14px; display:flex; gap:12px; align-items:center; }
     .search{ flex:1; display:flex; gap:10px; }
     input{
@@ -134,7 +132,7 @@
     .page{ display:none; }
     .page.active{ display:block; }
 
-    /* Dashboard grid (page 1) */
+    /* Dashboard grid */
     .dash{
       display:grid;
       gap:16px;
@@ -233,7 +231,7 @@
     .chartHead .title{ font-weight:900; }
     canvas{
       width:100%;
-      height:300px; /* graph bigger */
+      height:300px;
       display:block;
     }
     .tooltip{
@@ -250,7 +248,7 @@
     }
     .tooltip.hidden{ display:none; }
 
-    /* 7 days: compact + slider */
+    /* ✅ 7 jours : VRAI slider compact */
     .daysBox{
       padding:14px;
       border:1px solid rgba(255,255,255,.12);
@@ -266,14 +264,16 @@
 
     .daysViewport{
       display:flex;
-      align-items:stretch;
+      align-items:center;  /* ✅ évite l’étirement vertical */
       gap:10px;
     }
     .navBtn{
       width:42px;
+      height:42px;       /* ✅ fixe */
+      padding:0;         /* ✅ pas de padding qui agrandit */
       border-radius: 14px;
-      padding:10px 0;
-      display:grid; place-items:center;
+      display:grid;
+      place-items:center;
       flex:0 0 auto;
     }
     .navBtn:disabled{
@@ -285,29 +285,26 @@
     .daysTrack{
       flex:1;
       display:flex;
-      gap:10px;
+      gap:12px;
       overflow-x:auto;
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
-      padding-bottom:6px;
-      scrollbar-width: thin;
+      padding:4px 2px 8px;
+      scrollbar-width: none;       /* Firefox hide */
     }
-    .daysTrack::-webkit-scrollbar{ height: 8px; }
-    .daysTrack::-webkit-scrollbar-thumb{
-      background: rgba(255,255,255,.14);
-      border-radius: 999px;
-    }
+    .daysTrack::-webkit-scrollbar{ display:none; } /* Chrome/Safari hide */
+
     .day{
       scroll-snap-align: start;
-      flex: 0 0 30%;     /* ~3 cards visible */
-      min-width: 190px;  /* safety */
+      flex: 0 0 190px;   /* ✅ taille fixe */
+      width:190px;
       padding:12px;
       border-radius: 16px;
       border:1px solid rgba(255,255,255,.12);
       background: rgba(0,0,0,.10);
     }
     @media (max-width: 980px){
-      .day{ flex-basis: 70%; min-width: 240px; } /* on mobile swipe 1 by 1-ish */
+      .day{ flex-basis: 220px; width:220px; } /* mobile un peu plus large */
     }
 
     .dayTop{
@@ -386,10 +383,8 @@
   <div class="wrap">
     <aside class="sidebar glass">
       <div class="logo">☁️</div>
-
       <div class="sbtn active" data-page="dashboard" title="Dashboard">🏠</div>
       <div class="sbtn" data-page="map" title="Carte">🗺️</div>
-
       <div class="sbtn" data-page="favorites" title="Favoris (bientôt)">⭐</div>
       <div class="sbtn" data-page="charts" title="Graph (bientôt)">📈</div>
       <div class="spacer"></div>
@@ -407,7 +402,7 @@
         <button id="favBtn" title="Ajouter aux favoris">⭐ Favori</button>
       </div>
 
-      <!-- PAGE: DASHBOARD -->
+      <!-- DASHBOARD -->
       <section class="page active" id="page-dashboard">
         <div class="dash">
           <section class="left">
@@ -456,7 +451,6 @@
               <div class="favList" id="favList"></div>
             </div>
 
-            <!-- NEW compact 7 days with slider -->
             <div class="daysBox">
               <div class="daysHeader">
                 <div class="title">7 prochains jours</div>
@@ -473,7 +467,7 @@
         </div>
       </section>
 
-      <!-- PAGE: MAP -->
+      <!-- MAP -->
       <section class="page" id="page-map">
         <div class="mapGrid">
           <div class="mapBox">
@@ -481,7 +475,6 @@
               <div class="miniTitle">🗺️ Carte</div>
               <div class="hintLine">
                 Clique sur la carte pour afficher la météo à cet endroit.
-                (Ou cherche une ville, puis ouvre “Carte”.)
               </div>
             </div>
             <div id="map" class="glass"></div>
@@ -490,7 +483,7 @@
           <div class="mapInfo">
             <div class="miniCard">
               <div class="miniTitle">📍 Sélection</div>
-              <div class="hintLine" id="mapSelection">Aucune sélection pour le moment.</div>
+              <div class="hintLine" id="mapSelection">Aucune sélection.</div>
             </div>
             <div class="miniCard">
               <div class="miniTitle">🌡️ Météo</div>
@@ -504,27 +497,10 @@
         </div>
       </section>
 
-      <!-- Placeholder pages (bientôt) -->
-      <section class="page" id="page-favorites">
-        <div class="miniCard">
-          <div class="miniTitle">⭐ Favoris</div>
-          <div class="hintLine">On branchera ici une page dédiée (tri, recherche, groupes…).</div>
-        </div>
-      </section>
+      <section class="page" id="page-favorites"><div class="miniCard"><div class="miniTitle">⭐ Favoris</div><div class="hintLine">Bientôt…</div></div></section>
+      <section class="page" id="page-charts"><div class="miniCard"><div class="miniTitle">📈 Graphiques</div><div class="hintLine">Bientôt…</div></div></section>
+      <section class="page" id="page-settings"><div class="miniCard"><div class="miniTitle">⚙️ Settings</div><div class="hintLine">Bientôt…</div></div></section>
 
-      <section class="page" id="page-charts">
-        <div class="miniCard">
-          <div class="miniTitle">📈 Graphiques</div>
-          <div class="hintLine">On pourra mettre d’autres courbes (pluie, vent, humidité…).</div>
-        </div>
-      </section>
-
-      <section class="page" id="page-settings">
-        <div class="miniCard">
-          <div class="miniTitle">⚙️ Settings</div>
-          <div class="hintLine">Thèmes, unités, langue, etc.</div>
-        </div>
-      </section>
     </main>
   </div>
 
@@ -535,9 +511,6 @@
   ></script>
 
   <script>
-    // -----------------------------
-    // Helpers
-    // -----------------------------
     const $ = (id) => document.getElementById(id);
 
     const els = {
@@ -562,7 +535,6 @@
       sunset: $("sunset"),
 
       status: $("status"),
-
       favList: $("favList"),
       favCount: $("favCount"),
 
@@ -606,19 +578,14 @@
       return JSON.parse(txt);
     }
 
-    // -----------------------------
-    // Emoji mapping
-    // -----------------------------
     function owToEmoji(main, desc){
       const m = String(main || "").toLowerCase();
       const d = String(desc || "").toLowerCase();
-
       if(m.includes("thunder")) return "⛈️";
       if(m.includes("snow")) return "🌨️";
       if(m.includes("rain") || m.includes("drizzle")) return "🌧️";
       if(m.includes("cloud")) return "☁️";
       if(m.includes("clear")) return "☀️";
-
       if(d.includes("fog") || d.includes("brume") || d.includes("mist")) return "🌫️";
       return "⛅";
     }
@@ -635,16 +602,27 @@
       return "⛅";
     }
 
-    // -----------------------------
+    function labelDay(iso){
+      const d = new Date(iso);
+      const day = d.toLocaleDateString("fr-FR", { weekday:"short" });
+      const dd = d.toLocaleDateString("fr-FR", { day:"2-digit", month:"short" });
+      return { day, dd };
+    }
+
     // Favorites
-    // -----------------------------
-    function loadFavs(){
-      try{ return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); }
-      catch{ return []; }
-    }
-    function saveFavs(list){
-      localStorage.setItem(LS_KEY, JSON.stringify(list));
-    }
+    function loadFavs(){ try{ return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); }catch{ return []; } }
+    function saveFavs(list){ localStorage.setItem(LS_KEY, JSON.stringify(list)); }
+
+    const STATE = {
+      current: null,
+      forecast: null,
+      tzOffsetSec: 0,
+      clockTimer: null,
+      chartPoints: null,
+      map: null,
+      mapMarker: null,
+      daysStepPx: 0
+    };
 
     function renderFavs(activeKey=null){
       const favs = loadFavs();
@@ -711,46 +689,16 @@
       setStatus("Ajouté aux favoris ⭐");
     }
 
-    // -----------------------------
-    // Open-Meteo helpers
-    // -----------------------------
-    function labelDay(iso){
-      const d = new Date(iso);
-      const day = d.toLocaleDateString("fr-FR", { weekday:"short" });
-      const dd = d.toLocaleDateString("fr-FR", { day:"2-digit", month:"short" });
-      return { day, dd };
-    }
-
-    // -----------------------------
-    // State + live clock + days pager
-    // -----------------------------
-    const STATE = {
-      current: null,
-      forecast: null,
-      tzOffsetSec: 0,
-      clockTimer: null,
-
-      chartPoints: null,
-
-      map: null,
-      mapMarker: null,
-
-      daysStepPx: 0, // computed on first render
-    };
-
     function startLiveClock(){
       if(STATE.clockTimer) clearInterval(STATE.clockTimer);
-
       const tick = () => {
         if(!STATE.current) return;
         const now = Math.floor(Date.now()/1000);
         const localTime = fmtTimeFromUnix(now, STATE.tzOffsetSec || 0);
         els.pillLocal.textContent = `🕒 ${localTime}`;
-
         const country = STATE.current.sys?.country ?? "—";
         els.metaLine.textContent = `${country} • Heure locale ${localTime}`;
       };
-
       tick();
       STATE.clockTimer = setInterval(tick, 30_000);
     }
@@ -834,23 +782,14 @@
         els.daysGrid.appendChild(el);
       }
 
-      // compute "page" scroll: 3 cards at a time
       requestAnimationFrame(() => {
         const first = els.daysGrid.querySelector(".day");
-        if(first){
-          const style = getComputedStyle(els.daysGrid);
-          const gap = parseFloat(style.columnGap || style.gap || "10") || 10;
-          STATE.daysStepPx = (first.getBoundingClientRect().width + gap) * 3;
-        }else{
-          STATE.daysStepPx = els.daysGrid.clientWidth;
-        }
+        const gap = 12;
+        STATE.daysStepPx = first ? (first.getBoundingClientRect().width + gap) * 3 : els.daysGrid.clientWidth;
         updateDaysNavButtons();
       });
     }
 
-    // -----------------------------
-    // Chart + tooltip
-    // -----------------------------
     function drawTempChart(forecast){
       const h = forecast.hourly;
       const canvas = els.chart;
@@ -877,15 +816,6 @@
       const times = h.time.slice(0, 24);
       const temps = h.temperature_2m.slice(0, 24);
 
-      if(!temps.length){
-        ctx.fillStyle = "rgba(255,255,255,.7)";
-        ctx.font = "14px system-ui";
-        ctx.fillText("Pas de données hourly.", 14, 28);
-        els.chartHint.textContent = "—";
-        STATE.chartPoints = null;
-        return;
-      }
-
       const minT = Math.min(...temps);
       const maxT = Math.max(...temps);
 
@@ -903,7 +833,6 @@
         return y1 - n*(y1-y0);
       };
 
-      // grid + y labels
       ctx.strokeStyle = "rgba(255,255,255,.10)";
       ctx.lineWidth = 1;
       const ticks = 5;
@@ -913,16 +842,13 @@
         const p = i/(ticks-1);
         const t = maxT - p*(maxT-minT);
         const y = y0 + p*(y1-y0);
-
         ctx.beginPath();
         ctx.moveTo(x0, y);
         ctx.lineTo(x1, y);
         ctx.stroke();
-
         ctx.fillText(`${Math.round(t)}°`, 8, y + 4);
       }
 
-      // x labels every 6h
       ctx.fillStyle = "rgba(255,255,255,.75)";
       ctx.font = "12px system-ui";
       for(let i=0;i<times.length;i+=6){
@@ -931,7 +857,6 @@
         ctx.fillText(`${hh}h`, Math.max(x0, xFor(i)-10), H-6);
       }
 
-      // line
       ctx.strokeStyle = "rgba(120,200,255,.9)";
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -944,7 +869,6 @@
       ctx.stroke();
 
       const points = temps.map((t,i) => ({ i, t, x: xFor(i), y: yFor(t), time: times[i] }));
-
       ctx.fillStyle = "rgba(255,255,255,.92)";
       points.forEach(p => {
         ctx.beginPath();
@@ -962,13 +886,8 @@
       els.chartTooltip.style.top = y + "px";
       els.chartTooltip.classList.remove("hidden");
     }
-    function hideTooltip(){
-      els.chartTooltip.classList.add("hidden");
-    }
+    function hideTooltip(){ els.chartTooltip.classList.add("hidden"); }
 
-    // -----------------------------
-    // Load flows
-    // -----------------------------
     async function loadByCity(city){
       const c = (city || "").trim();
       if(!c) return setStatus("Entre une ville 🙂", true);
@@ -989,8 +908,6 @@
 
         renderFavs();
         setStatus("");
-
-        if(STATE.map) setMapMarker(lat, lon, current.name);
       }catch(e){
         console.error(e);
         setStatus("Erreur: " + (e.message || "inconnue"), true);
@@ -1011,8 +928,6 @@
 
         renderFavs(`${current.name}|${current.sys?.country}|${Number(lat).toFixed(4)}|${Number(lon).toFixed(4)}`);
         setStatus("");
-
-        if(STATE.map) setMapMarker(lat, lon, current.name);
       }catch(e){
         console.error(e);
         setStatus("Erreur: " + (e.message || "inconnue"), true);
@@ -1023,7 +938,6 @@
       if(!navigator.geolocation){
         return setStatus("Géolocalisation non supportée.", true);
       }
-
       setStatus("Localisation…");
       navigator.geolocation.getCurrentPosition(
         (pos) => loadByCoords(pos.coords.latitude, pos.coords.longitude),
@@ -1039,9 +953,6 @@
       );
     }
 
-    // -----------------------------
-    // Sidebar navigation (pages)
-    // -----------------------------
     function setPage(name){
       document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
       const page = document.getElementById("page-" + name);
@@ -1050,112 +961,23 @@
       document.querySelectorAll(".sbtn[data-page]").forEach(b => {
         b.classList.toggle("active", b.dataset.page === name);
       });
-
-      if(name === "map") initMapOnce();
-      if(name !== "map") hideTooltip();
+      hideTooltip();
     }
 
-    // -----------------------------
-    // Map
-    // -----------------------------
-    function initMapOnce(){
-      if(STATE.map) {
-        setTimeout(() => STATE.map.invalidateSize(), 50);
-        return;
-      }
-
-      const map = L.map("map", { zoomControl: true }).setView([48.8566, 2.3522], 5);
-      STATE.map = map;
-
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: "&copy; OpenStreetMap"
-      }).addTo(map);
-
-      map.on("click", async (e) => {
-        const { lat, lng } = e.latlng;
-        els.mapSelection.textContent = `Lat ${lat.toFixed(4)}, Lon ${lng.toFixed(4)}`;
-        els.mapWeather.textContent = "Chargement…";
-        els.mapDays.textContent = "Chargement…";
-
-        try{
-          const current = await callApi("/api/weather", { lat: String(lat), lon: String(lng) });
-          const w = current.weather?.[0];
-          const emoji = owToEmoji(w?.main, w?.description);
-
-          const now = Math.floor(Date.now()/1000);
-          const t = fmtTimeFromUnix(now, current.timezone ?? 0);
-
-          els.mapWeather.textContent =
-            `${emoji} ${current.name ?? "—"} • ${fmtTemp(current.main?.temp ?? 0)} • ${w?.description ?? "—"} • ${t}`;
-
-          const forecast = await callApi("/api/forecast", { lat: String(lat), lon: String(lng) });
-          const daily = forecast.daily || {};
-          const times = (daily.time || []).slice(0, 7);
-          const tmin = (daily.temperature_2m_min || []).slice(0, 7);
-          const tmax = (daily.temperature_2m_max || []).slice(0, 7);
-          const wc = (daily.weathercode || []).slice(0, 7);
-
-          const line = times.map((iso, i) => {
-            const { day } = labelDay(iso);
-            const avg = (typeof tmin[i] === "number" && typeof tmax[i] === "number") ? (tmin[i]+tmax[i])/2 : null;
-            return `${day} ${wcToEmoji(wc[i])} ${avg==null ? "—" : fmtTemp(avg)}`;
-          }).join("  •  ");
-
-          els.mapDays.textContent = line || "—";
-
-          setMapMarker(lat, lng, current.name || "Sélection");
-        }catch(err){
-          console.error(err);
-          els.mapWeather.textContent = "Erreur météo.";
-          els.mapDays.textContent = "—";
-        }
-      });
-
-      if(STATE.current?.coord){
-        setMapMarker(STATE.current.coord.lat, STATE.current.coord.lon, STATE.current.name);
-        map.setView([STATE.current.coord.lat, STATE.current.coord.lon], 8);
-      }
-
-      setTimeout(() => map.invalidateSize(), 50);
-    }
-
-    function setMapMarker(lat, lon, label){
-      if(!STATE.map) return;
-      const pos = [lat, lon];
-
-      if(!STATE.mapMarker){
-        STATE.mapMarker = L.marker(pos).addTo(STATE.map);
-      }else{
-        STATE.mapMarker.setLatLng(pos);
-      }
-      STATE.mapMarker.bindPopup(`<b>${label || "Lieu"}</b><br>${lat.toFixed(3)}, ${lon.toFixed(3)}`).openPopup();
-    }
-
-    // -----------------------------
-    // Days slider controls
-    // -----------------------------
     function scrollDaysBy(dir){
       const step = STATE.daysStepPx || els.daysGrid.clientWidth;
       els.daysGrid.scrollBy({ left: dir * step, behavior: "smooth" });
     }
 
-    els.daysPrev.addEventListener("click", () => scrollDaysBy(-1));
-    els.daysNext.addEventListener("click", () => scrollDaysBy(1));
-
-    els.daysGrid.addEventListener("scroll", () => {
-      updateDaysNavButtons();
-    }, { passive:true });
-
-    // -----------------------------
     // Events
-    // -----------------------------
     els.searchBtn.addEventListener("click", () => loadByCity(els.cityInput.value.trim()));
-    els.cityInput.addEventListener("keydown", (e) => {
-      if(e.key === "Enter") loadByCity(els.cityInput.value.trim());
-    });
+    els.cityInput.addEventListener("keydown", (e) => { if(e.key === "Enter") loadByCity(els.cityInput.value.trim()); });
     els.geoBtn.addEventListener("click", useGeolocation);
     els.favBtn.addEventListener("click", addCurrentToFav);
+
+    els.daysPrev.addEventListener("click", () => scrollDaysBy(-1));
+    els.daysNext.addEventListener("click", () => scrollDaysBy(1));
+    els.daysGrid.addEventListener("scroll", () => updateDaysNavButtons(), { passive:true });
 
     document.querySelectorAll(".sbtn[data-page]").forEach(btn => {
       btn.addEventListener("click", () => setPage(btn.dataset.page));
@@ -1163,19 +985,9 @@
 
     window.addEventListener("resize", () => {
       if(STATE.forecast) drawTempChart(STATE.forecast);
-      if(STATE.map) setTimeout(() => STATE.map.invalidateSize(), 50);
-
-      // recompute days step for 3 cards
-      const first = els.daysGrid.querySelector(".day");
-      if(first){
-        const style = getComputedStyle(els.daysGrid);
-        const gap = parseFloat(style.columnGap || style.gap || "10") || 10;
-        STATE.daysStepPx = (first.getBoundingClientRect().width + gap) * 3;
-      }
       updateDaysNavButtons();
     });
 
-    // chart tooltip hover
     els.chart.addEventListener("mousemove", (e) => {
       const pts = STATE.chartPoints;
       if(!pts || !pts.length) return hideTooltip();
@@ -1184,24 +996,20 @@
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
 
-      let best = null;
-      let bestD = Infinity;
+      let best = null, bestD = Infinity;
       for(const p of pts){
         const dx = mx - p.x;
         const dy = my - p.y;
         const d = dx*dx + dy*dy;
         if(d < bestD){ bestD = d; best = p; }
       }
-
       const radius = 14;
       if(best && bestD <= radius*radius){
         const d = new Date(best.time);
         const hh = String(d.getHours()).padStart(2,"0");
         const mm = String(d.getMinutes()).padStart(2,"0");
         showTooltip(best.x, best.y, `<b>${fmtTemp(best.t)}</b> • ${hh}:${mm}`);
-      }else{
-        hideTooltip();
-      }
+      } else hideTooltip();
     });
     els.chart.addEventListener("mouseleave", hideTooltip);
 
