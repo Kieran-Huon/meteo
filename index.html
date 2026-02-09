@@ -4,14 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Weather Dashboard</title>
-
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
-  />
-
   <style>
     :root{
       --bg: #0b1220;
@@ -78,20 +70,30 @@
       user-select:none;
     }
     .sbtn:hover{ background: rgba(255,255,255,.12); transform: translateY(-1px); }
-    .sbtn.active{
-      outline: 2px solid rgba(255,255,255,.20);
-      background: rgba(255,255,255,.12);
-    }
     .spacer{ flex:1; }
 
-    /* Main */
+    /* Main layout */
     .main{
       padding:16px;
       display:grid;
       gap:16px;
+      grid-template-columns: 1.1fr .9fr;
+      grid-template-rows: auto auto;
+      grid-template-areas:
+        "top top"
+        "left right";
+    }
+    @media (max-width: 980px){
+      .main{
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "top"
+          "left"
+          "right";
+      }
     }
 
-    .topbar{ padding:14px; display:flex; gap:12px; align-items:center; }
+    .topbar{ grid-area: top; padding:14px; display:flex; gap:12px; align-items:center; }
     .search{ flex:1; display:flex; gap:10px; }
     input{
       width:100%;
@@ -125,23 +127,8 @@
       color: rgba(255,255,255,.85);
       font-size:13px;
       white-space:nowrap;
-      display:flex; align-items:center; gap:8px;
     }
 
-    /* Pages */
-    .page{ display:none; }
-    .page.active{ display:block; }
-
-    /* Dashboard grid */
-    .dash{
-      display:grid;
-      gap:16px;
-      grid-template-columns: 1.1fr .9fr;
-      grid-template-areas: "left right";
-    }
-    @media (max-width: 980px){
-      .dash{ grid-template-columns: 1fr; grid-template-areas: "left" "right"; }
-    }
     .left{ grid-area:left; padding:14px; display:grid; gap:14px; }
     .right{ grid-area:right; padding:14px; display:grid; gap:14px; }
 
@@ -153,15 +140,7 @@
       border-radius: 16px;
       background: rgba(0,0,0,.12);
     }
-    .cityLine{ display:flex; align-items:center; gap:10px; }
     .city{ font-size:22px; font-weight:900; line-height:1.1; }
-    .wxEmoji{
-      width:38px; height:38px; border-radius:14px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      display:grid; place-items:center;
-      font-size:20px;
-    }
     .meta{ margin-top:6px; color:var(--muted); font-size:13px; display:flex; gap:10px; flex-wrap:wrap; }
     .desc{ margin-top:6px; color:rgba(255,255,255,.80); text-transform:capitalize; }
     .temp{ font-size:54px; font-weight:1000; letter-spacing:-1px; }
@@ -216,6 +195,36 @@
     }
     .xbtn:hover{ background: rgba(255,255,255,.12); }
 
+    /* 7 days */
+    .daysGrid{
+      display:grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap:10px;
+      overflow:auto;
+      padding-bottom:6px;
+    }
+    .day{
+      min-width: 120px;
+      padding:12px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.10);
+    }
+    .day .d{ color:rgba(255,255,255,.85); font-weight:900; font-size:13px; }
+    .day .m{ color:var(--muted); font-size:12px; margin-top:4px; text-transform:capitalize;}
+    .day .t{ display:flex; justify-content:center; margin-top:10px; font-weight:900; }
+
+    .badge{
+      display:inline-block;
+      margin-top:10px;
+      font-size:12px;
+      padding:6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.85);
+    }
+
     /* Chart */
     .chartBox{
       position:relative;
@@ -231,9 +240,10 @@
     .chartHead .title{ font-weight:900; }
     canvas{
       width:100%;
-      height:300px;
+      height:240px;
       display:block;
     }
+
     .tooltip{
       position:absolute;
       padding:8px 10px;
@@ -248,99 +258,6 @@
     }
     .tooltip.hidden{ display:none; }
 
-    /* ✅ 7 jours : VRAI slider compact */
-    .daysBox{
-      padding:14px;
-      border:1px solid rgba(255,255,255,.12);
-      border-radius: 16px;
-      background: rgba(0,0,0,.10);
-      display:grid;
-      gap:10px;
-    }
-    .daysHeader{
-      display:flex; justify-content:space-between; align-items:center; gap:10px;
-    }
-    .daysHeader .title{ font-weight:900; }
-
-    .daysViewport{
-      display:flex;
-      align-items:center;  /* ✅ évite l’étirement vertical */
-      gap:10px;
-    }
-    .navBtn{
-      width:42px;
-      height:42px;       /* ✅ fixe */
-      padding:0;         /* ✅ pas de padding qui agrandit */
-      border-radius: 14px;
-      display:grid;
-      place-items:center;
-      flex:0 0 auto;
-    }
-    .navBtn:disabled{
-      opacity:.45;
-      cursor:not-allowed;
-      transform:none;
-    }
-
-    .daysTrack{
-      flex:1;
-      display:flex;
-      gap:12px;
-      overflow-x:auto;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-      padding:4px 2px 8px;
-      scrollbar-width: none;       /* Firefox hide */
-    }
-    .daysTrack::-webkit-scrollbar{ display:none; } /* Chrome/Safari hide */
-
-    .day{
-      scroll-snap-align: start;
-      flex: 0 0 190px;   /* ✅ taille fixe */
-      width:190px;
-      padding:12px;
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.10);
-    }
-    @media (max-width: 980px){
-      .day{ flex-basis: 220px; width:220px; } /* mobile un peu plus large */
-    }
-
-    .dayTop{
-      display:flex; justify-content:space-between; align-items:baseline;
-      margin-bottom:10px;
-    }
-    .day .d{ font-weight:900; font-size:13px; text-transform:capitalize; }
-    .day .m{ color:var(--muted); font-size:12px; }
-    .dayMid{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:10px;
-    }
-    .dayEmoji{
-      width:42px; height:42px; border-radius:16px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      display:grid; place-items:center;
-      font-size:22px;
-      flex:0 0 auto;
-    }
-    .dayTemp{
-      text-align:right;
-      flex:1;
-    }
-    .dayTemp .avg{
-      font-size:18px;
-      font-weight:1000;
-      letter-spacing:-.3px;
-      line-height:1;
-    }
-    .dayTemp .mm{
-      margin-top:6px;
-      color: rgba(255,255,255,.75);
-      font-size:12px;
-    }
-
     .status{
       padding:10px 12px;
       border-radius: 14px;
@@ -350,32 +267,6 @@
       font-size:13px;
     }
     .error{ color: rgba(255,180,180,.95); }
-
-    /* Map page */
-    .mapGrid{
-      display:grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap:16px;
-    }
-    @media (max-width: 980px){
-      .mapGrid{ grid-template-columns: 1fr; }
-    }
-    .mapBox{ padding:14px; }
-    #map{
-      height: 520px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.12);
-      overflow:hidden;
-    }
-    .mapInfo{ padding:14px; display:grid; gap:14px; }
-    .miniCard{
-      padding:14px;
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.10);
-    }
-    .miniTitle{ font-weight:900; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
-    .hintLine{ color: var(--muted); font-size:13px; line-height:1.45; }
   </style>
 </head>
 
@@ -383,12 +274,11 @@
   <div class="wrap">
     <aside class="sidebar glass">
       <div class="logo">☁️</div>
-      <div class="sbtn active" data-page="dashboard" title="Dashboard">🏠</div>
-      <div class="sbtn" data-page="map" title="Carte">🗺️</div>
-      <div class="sbtn" data-page="favorites" title="Favoris (bientôt)">⭐</div>
-      <div class="sbtn" data-page="charts" title="Graph (bientôt)">📈</div>
+      <div class="sbtn" title="Dashboard">🏠</div>
+      <div class="sbtn" title="Favoris">⭐</div>
+      <div class="sbtn" title="Graph">📈</div>
       <div class="spacer"></div>
-      <div class="sbtn" data-page="settings" title="Settings (bientôt)">⚙️</div>
+      <div class="sbtn" title="Settings">⚙️</div>
     </aside>
 
     <main class="main glass">
@@ -402,115 +292,64 @@
         <button id="favBtn" title="Ajouter aux favoris">⭐ Favori</button>
       </div>
 
-      <!-- DASHBOARD -->
-      <section class="page active" id="page-dashboard">
-        <div class="dash">
-          <section class="left">
-            <div class="current">
-              <div>
-                <div class="cityLine">
-                  <div class="wxEmoji" id="currentEmoji">⛅</div>
-                  <div class="city" id="cityName">—</div>
-                </div>
-                <div class="meta" id="metaLine">—</div>
-                <div class="desc" id="desc">—</div>
-              </div>
-              <div style="text-align:right">
-                <div class="temp" id="temp">--°</div>
-                <div class="sub" id="feels">Ressenti —</div>
-              </div>
-            </div>
-
-            <div class="stats">
-              <div class="stat"><div class="k">Humidité</div><div class="v" id="humidity">—</div></div>
-              <div class="stat"><div class="k">Vent</div><div class="v" id="wind">—</div></div>
-              <div class="stat"><div class="k">Pression</div><div class="v" id="pressure">—</div></div>
-              <div class="stat"><div class="k">Visibilité</div><div class="v" id="visibility">—</div></div>
-              <div class="stat"><div class="k">Lever</div><div class="v" id="sunrise">—</div></div>
-              <div class="stat"><div class="k">Coucher</div><div class="v" id="sunset">—</div></div>
-            </div>
-
-            <div class="chartBox">
-              <div class="chartHead">
-                <div class="title">Température (prochaines heures)</div>
-                <div class="pill" id="chartHint">—</div>
-              </div>
-              <canvas id="tempChart" width="900" height="300"></canvas>
-              <div id="chartTooltip" class="tooltip hidden"></div>
-            </div>
-
-            <div class="status" id="status">Prêt 🙂</div>
-          </section>
-
-          <section class="right">
-            <div class="favBox">
-              <div class="favHead">
-                <div style="font-weight:900">Favoris</div>
-                <div class="pill" id="favCount">0</div>
-              </div>
-              <div class="favList" id="favList"></div>
-            </div>
-
-            <div class="daysBox">
-              <div class="daysHeader">
-                <div class="title">7 prochains jours</div>
-                <div class="pill" id="daysHint">—</div>
-              </div>
-
-              <div class="daysViewport">
-                <button class="navBtn" id="daysPrev" title="Précédent">◀</button>
-                <div class="daysTrack" id="daysGrid"></div>
-                <button class="navBtn" id="daysNext" title="Suivant">▶</button>
-              </div>
-            </div>
-          </section>
-        </div>
-      </section>
-
-      <!-- MAP -->
-      <section class="page" id="page-map">
-        <div class="mapGrid">
-          <div class="mapBox">
-            <div class="miniCard" style="margin-bottom:14px">
-              <div class="miniTitle">🗺️ Carte</div>
-              <div class="hintLine">
-                Clique sur la carte pour afficher la météo à cet endroit.
-              </div>
-            </div>
-            <div id="map" class="glass"></div>
+      <section class="left">
+        <div class="current">
+          <div>
+            <div class="city" id="cityName">—</div>
+            <div class="meta" id="metaLine">—</div>
+            <div class="desc" id="desc">—</div>
           </div>
-
-          <div class="mapInfo">
-            <div class="miniCard">
-              <div class="miniTitle">📍 Sélection</div>
-              <div class="hintLine" id="mapSelection">Aucune sélection.</div>
-            </div>
-            <div class="miniCard">
-              <div class="miniTitle">🌡️ Météo</div>
-              <div class="hintLine" id="mapWeather">—</div>
-            </div>
-            <div class="miniCard">
-              <div class="miniTitle">📅 Prochains jours</div>
-              <div class="hintLine" id="mapDays">—</div>
-            </div>
+          <div style="text-align:right">
+            <div class="temp" id="temp">--°</div>
+            <div class="sub" id="feels">Ressenti —</div>
           </div>
         </div>
+
+        <div class="stats">
+          <div class="stat"><div class="k">Humidité</div><div class="v" id="humidity">—</div></div>
+          <div class="stat"><div class="k">Vent</div><div class="v" id="wind">—</div></div>
+          <div class="stat"><div class="k">Pression</div><div class="v" id="pressure">—</div></div>
+          <div class="stat"><div class="k">Visibilité</div><div class="v" id="visibility">—</div></div>
+          <div class="stat"><div class="k">Lever</div><div class="v" id="sunrise">—</div></div>
+          <div class="stat"><div class="k">Coucher</div><div class="v" id="sunset">—</div></div>
+        </div>
+
+        <div class="chartBox">
+          <div class="chartHead">
+            <div class="title">Température (prochaines heures)</div>
+            <div class="pill" id="chartHint">—</div>
+          </div>
+          <canvas id="tempChart" width="900" height="300"></canvas>
+          <div id="chartTooltip" class="tooltip hidden"></div>
+        </div>
+
+        <div class="status" id="status">Prêt 🙂</div>
       </section>
 
-      <section class="page" id="page-favorites"><div class="miniCard"><div class="miniTitle">⭐ Favoris</div><div class="hintLine">Bientôt…</div></div></section>
-      <section class="page" id="page-charts"><div class="miniCard"><div class="miniTitle">📈 Graphiques</div><div class="hintLine">Bientôt…</div></div></section>
-      <section class="page" id="page-settings"><div class="miniCard"><div class="miniTitle">⚙️ Settings</div><div class="hintLine">Bientôt…</div></div></section>
+      <section class="right">
+        <div class="favBox">
+          <div class="favHead">
+            <div style="font-weight:900">Favoris</div>
+            <div class="pill" id="favCount">0</div>
+          </div>
+          <div class="favList" id="favList"></div>
+        </div>
 
+        <div class="favBox">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+            <div style="font-weight:900">7 prochains jours</div>
+            <div class="pill" id="daysHint">—</div>
+          </div>
+          <div style="margin-top:10px" class="daysGrid" id="daysGrid"></div>
+        </div>
+      </section>
     </main>
   </div>
 
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
-
   <script>
+    // -----------------------------
+    // Helpers
+    // -----------------------------
     const $ = (id) => document.getElementById(id);
 
     const els = {
@@ -518,14 +357,13 @@
       searchBtn: $("searchBtn"),
       geoBtn: $("geoBtn"),
       favBtn: $("favBtn"),
-      pillLocal: $("pillLocal"),
 
-      currentEmoji: $("currentEmoji"),
       cityName: $("cityName"),
       metaLine: $("metaLine"),
       desc: $("desc"),
       temp: $("temp"),
       feels: $("feels"),
+      pillLocal: $("pillLocal"),
 
       humidity: $("humidity"),
       wind: $("wind"),
@@ -535,21 +373,16 @@
       sunset: $("sunset"),
 
       status: $("status"),
+
       favList: $("favList"),
       favCount: $("favCount"),
 
       daysGrid: $("daysGrid"),
       daysHint: $("daysHint"),
-      daysPrev: $("daysPrev"),
-      daysNext: $("daysNext"),
 
       chart: $("tempChart"),
       chartHint: $("chartHint"),
       chartTooltip: $("chartTooltip"),
-
-      mapSelection: $("mapSelection"),
-      mapWeather: $("mapWeather"),
-      mapDays: $("mapDays"),
     };
 
     const LS_KEY = "weather_favs_v1";
@@ -560,6 +393,7 @@
     }
 
     function fmtTemp(c){ return `${Math.round(c)}°`; }
+
     function fmtKm(m){ return `${(m/1000).toFixed(1)} km`; }
 
     function fmtTimeFromUnix(unix, tzOffsetSec){
@@ -578,51 +412,20 @@
       return JSON.parse(txt);
     }
 
-    function owToEmoji(main, desc){
-      const m = String(main || "").toLowerCase();
-      const d = String(desc || "").toLowerCase();
-      if(m.includes("thunder")) return "⛈️";
-      if(m.includes("snow")) return "🌨️";
-      if(m.includes("rain") || m.includes("drizzle")) return "🌧️";
-      if(m.includes("cloud")) return "☁️";
-      if(m.includes("clear")) return "☀️";
-      if(d.includes("fog") || d.includes("brume") || d.includes("mist")) return "🌫️";
-      return "⛅";
-    }
-
-    function wcToEmoji(code){
-      if(code === 0) return "☀️";
-      if([1,2,3].includes(code)) return "⛅";
-      if([45,48].includes(code)) return "🌫️";
-      if([51,53,55,56,57].includes(code)) return "🌦️";
-      if([61,63,65,66,67].includes(code)) return "🌧️";
-      if([71,73,75,77].includes(code)) return "🌨️";
-      if([80,81,82].includes(code)) return "🌦️";
-      if([95,96,99].includes(code)) return "⛈️";
-      return "⛅";
-    }
-
-    function labelDay(iso){
-      const d = new Date(iso);
-      const day = d.toLocaleDateString("fr-FR", { weekday:"short" });
-      const dd = d.toLocaleDateString("fr-FR", { day:"2-digit", month:"short" });
-      return { day, dd };
-    }
-
+    // -----------------------------
     // Favorites
-    function loadFavs(){ try{ return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); }catch{ return []; } }
-    function saveFavs(list){ localStorage.setItem(LS_KEY, JSON.stringify(list)); }
+    // -----------------------------
+    function loadFavs(){
+      try{
+        return JSON.parse(localStorage.getItem(LS_KEY) || "[]");
+      }catch{
+        return [];
+      }
+    }
 
-    const STATE = {
-      current: null,
-      forecast: null,
-      tzOffsetSec: 0,
-      clockTimer: null,
-      chartPoints: null,
-      map: null,
-      mapMarker: null,
-      daysStepPx: 0
-    };
+    function saveFavs(list){
+      localStorage.setItem(LS_KEY, JSON.stringify(list));
+    }
 
     function renderFavs(activeKey=null){
       const favs = loadFavs();
@@ -689,29 +492,44 @@
       setStatus("Ajouté aux favoris ⭐");
     }
 
-    function startLiveClock(){
-      if(STATE.clockTimer) clearInterval(STATE.clockTimer);
-      const tick = () => {
-        if(!STATE.current) return;
-        const now = Math.floor(Date.now()/1000);
-        const localTime = fmtTimeFromUnix(now, STATE.tzOffsetSec || 0);
-        els.pillLocal.textContent = `🕒 ${localTime}`;
-        const country = STATE.current.sys?.country ?? "—";
-        els.metaLine.textContent = `${country} • Heure locale ${localTime}`;
-      };
-      tick();
-      STATE.clockTimer = setInterval(tick, 30_000);
+    // -----------------------------
+    // Open-Meteo: helpers
+    // -----------------------------
+    function labelDay(iso){
+      const d = new Date(iso);
+      const day = d.toLocaleDateString("fr-FR", { weekday:"short" });
+      const dd = d.toLocaleDateString("fr-FR", { day:"2-digit", month:"short" });
+      return { day, dd };
     }
+
+    function wcToText(code){
+      if(code === 0) return "Ciel dégagé";
+      if([1,2,3].includes(code)) return "Nuageux";
+      if([45,48].includes(code)) return "Brouillard";
+      if([51,53,55,56,57].includes(code)) return "Bruine";
+      if([61,63,65,66,67].includes(code)) return "Pluie";
+      if([71,73,75,77].includes(code)) return "Neige";
+      if([80,81,82].includes(code)) return "Averses";
+      if([95,96,99].includes(code)) return "Orage";
+      return "—";
+    }
+
+    // -----------------------------
+    // State + UI
+    // -----------------------------
+    const STATE = {
+      current: null,
+      forecast: null, // Open-Meteo data
+    };
 
     function updateCurrentUI(data){
       STATE.current = data;
-      STATE.tzOffsetSec = data.timezone ?? 0;
 
       const w = data.weather?.[0];
-      els.currentEmoji.textContent = owToEmoji(w?.main, w?.description);
+      const tz = data.timezone ?? 0;
 
       const now = Math.floor(Date.now()/1000);
-      const localTime = fmtTimeFromUnix(now, STATE.tzOffsetSec);
+      const localTime = fmtTimeFromUnix(now, tz);
 
       els.cityName.textContent = data.name ?? "—";
       els.desc.textContent = w?.description ?? "—";
@@ -726,18 +544,8 @@
       els.pressure.textContent = (data.main?.pressure != null) ? `${data.main.pressure} hPa` : "—";
       els.visibility.textContent = (data.visibility != null) ? fmtKm(data.visibility) : "—";
 
-      els.sunrise.textContent = data.sys?.sunrise ? fmtTimeFromUnix(data.sys.sunrise, STATE.tzOffsetSec) : "—";
-      els.sunset.textContent = data.sys?.sunset ? fmtTimeFromUnix(data.sys.sunset, STATE.tzOffsetSec) : "—";
-
-      startLiveClock();
-    }
-
-    function updateDaysNavButtons(){
-      const el = els.daysGrid;
-      const max = el.scrollWidth - el.clientWidth;
-      const x = el.scrollLeft;
-      els.daysPrev.disabled = x <= 2;
-      els.daysNext.disabled = x >= max - 2;
+      els.sunrise.textContent = data.sys?.sunrise ? fmtTimeFromUnix(data.sys.sunrise, tz) : "—";
+      els.sunset.textContent = data.sys?.sunset ? fmtTimeFromUnix(data.sys.sunset, tz) : "—";
     }
 
     function render7Days(forecast){
@@ -760,44 +568,37 @@
 
       for(let i=0;i<times.length;i++){
         const { day, dd } = labelDay(times[i]);
+
         const min = tmin[i];
         const max = tmax[i];
-        const avg = (typeof min === "number" && typeof max === "number") ? (min + max)/2 : null;
+        const avg = (typeof min === "number" && typeof max === "number") ? (min + max) / 2 : null;
 
         const el = document.createElement("div");
         el.className = "day";
         el.innerHTML = `
-          <div class="dayTop">
-            <div class="d">${day}</div>
-            <div class="m">${dd}</div>
+          <div class="d">${day}</div>
+          <div class="m">${dd}</div>
+          <div class="t">
+            <span>${avg == null ? "—" : fmtTemp(avg)}</span>
           </div>
-          <div class="dayMid">
-            <div class="dayEmoji">${wcToEmoji(wc[i])}</div>
-            <div class="dayTemp">
-              <div class="avg">${avg == null ? "—" : fmtTemp(avg)}</div>
-              <div class="mm">${fmtTemp(min ?? 0)} • ${fmtTemp(max ?? 0)}</div>
-            </div>
-          </div>
+          <div class="badge">Moyenne • ${wcToText(wc[i])}</div>
         `;
         els.daysGrid.appendChild(el);
       }
-
-      requestAnimationFrame(() => {
-        const first = els.daysGrid.querySelector(".day");
-        const gap = 12;
-        STATE.daysStepPx = first ? (first.getBoundingClientRect().width + gap) * 3 : els.daysGrid.clientWidth;
-        updateDaysNavButtons();
-      });
     }
 
+    // -----------------------------
+    // Canvas chart with Y labels + hover tooltip
+    // -----------------------------
     function drawTempChart(forecast){
       const h = forecast.hourly;
       const canvas = els.chart;
       const ctx = canvas.getContext("2d");
 
+      // retina
       const dpr = window.devicePixelRatio || 1;
       const cssW = canvas.clientWidth || 900;
-      const cssH = 300;
+      const cssH = 240;
       canvas.style.height = cssH + "px";
       canvas.width = Math.floor(cssW * dpr);
       canvas.height = Math.floor(cssH * dpr);
@@ -809,16 +610,26 @@
         ctx.font = "14px system-ui";
         ctx.fillText("Pas de données hourly.", 14, 28);
         els.chartHint.textContent = "—";
-        STATE.chartPoints = null;
+        canvas.__points = null;
         return;
       }
 
       const times = h.time.slice(0, 24);
       const temps = h.temperature_2m.slice(0, 24);
 
+      if(!temps.length){
+        ctx.fillStyle = "rgba(255,255,255,.7)";
+        ctx.font = "14px system-ui";
+        ctx.fillText("Pas de données hourly.", 14, 28);
+        els.chartHint.textContent = "—";
+        canvas.__points = null;
+        return;
+      }
+
       const minT = Math.min(...temps);
       const maxT = Math.max(...temps);
 
+      // padding + place for Y axis labels
       const padTop = 14;
       const padRight = 14;
       const padBottom = 20;
@@ -833,8 +644,10 @@
         return y1 - n*(y1-y0);
       };
 
+      // grid + y labels
       ctx.strokeStyle = "rgba(255,255,255,.10)";
       ctx.lineWidth = 1;
+
       const ticks = 5;
       ctx.fillStyle = "rgba(255,255,255,.70)";
       ctx.font = "12px system-ui";
@@ -842,13 +655,16 @@
         const p = i/(ticks-1);
         const t = maxT - p*(maxT-minT);
         const y = y0 + p*(y1-y0);
+
         ctx.beginPath();
         ctx.moveTo(x0, y);
         ctx.lineTo(x1, y);
         ctx.stroke();
+
         ctx.fillText(`${Math.round(t)}°`, 8, y + 4);
       }
 
+      // x labels every 6h
       ctx.fillStyle = "rgba(255,255,255,.75)";
       ctx.font = "12px system-ui";
       for(let i=0;i<times.length;i+=6){
@@ -857,6 +673,7 @@
         ctx.fillText(`${hh}h`, Math.max(x0, xFor(i)-10), H-6);
       }
 
+      // line
       ctx.strokeStyle = "rgba(120,200,255,.9)";
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -868,7 +685,9 @@
       });
       ctx.stroke();
 
+      // points + store for hover
       const points = temps.map((t,i) => ({ i, t, x: xFor(i), y: yFor(t), time: times[i] }));
+
       ctx.fillStyle = "rgba(255,255,255,.92)";
       points.forEach(p => {
         ctx.beginPath();
@@ -877,7 +696,7 @@
       });
 
       els.chartHint.textContent = `Min ${fmtTemp(minT)} • Max ${fmtTemp(maxT)}`;
-      STATE.chartPoints = points;
+      canvas.__points = points;
     }
 
     function showTooltip(x, y, html){
@@ -886,8 +705,13 @@
       els.chartTooltip.style.top = y + "px";
       els.chartTooltip.classList.remove("hidden");
     }
-    function hideTooltip(){ els.chartTooltip.classList.add("hidden"); }
+    function hideTooltip(){
+      els.chartTooltip.classList.add("hidden");
+    }
 
+    // -----------------------------
+    // Load flows
+    // -----------------------------
     async function loadByCity(city){
       const c = (city || "").trim();
       if(!c) return setStatus("Entre une ville 🙂", true);
@@ -900,6 +724,7 @@
         const lat = current.coord?.lat;
         const lon = current.coord?.lon;
 
+        // Open-Meteo forecast (free)
         const forecast = await callApi("/api/forecast", { lat: String(lat), lon: String(lon) });
         STATE.forecast = forecast;
 
@@ -938,6 +763,7 @@
       if(!navigator.geolocation){
         return setStatus("Géolocalisation non supportée.", true);
       }
+
       setStatus("Localisation…");
       navigator.geolocation.getCurrentPosition(
         (pos) => loadByCoords(pos.coords.latitude, pos.coords.longitude),
@@ -953,63 +779,50 @@
       );
     }
 
-    function setPage(name){
-      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-      const page = document.getElementById("page-" + name);
-      if(page) page.classList.add("active");
-
-      document.querySelectorAll(".sbtn[data-page]").forEach(b => {
-        b.classList.toggle("active", b.dataset.page === name);
-      });
-      hideTooltip();
-    }
-
-    function scrollDaysBy(dir){
-      const step = STATE.daysStepPx || els.daysGrid.clientWidth;
-      els.daysGrid.scrollBy({ left: dir * step, behavior: "smooth" });
-    }
-
+    // -----------------------------
     // Events
+    // -----------------------------
     els.searchBtn.addEventListener("click", () => loadByCity(els.cityInput.value.trim()));
-    els.cityInput.addEventListener("keydown", (e) => { if(e.key === "Enter") loadByCity(els.cityInput.value.trim()); });
+    els.cityInput.addEventListener("keydown", (e) => {
+      if(e.key === "Enter") loadByCity(els.cityInput.value.trim());
+    });
     els.geoBtn.addEventListener("click", useGeolocation);
     els.favBtn.addEventListener("click", addCurrentToFav);
 
-    els.daysPrev.addEventListener("click", () => scrollDaysBy(-1));
-    els.daysNext.addEventListener("click", () => scrollDaysBy(1));
-    els.daysGrid.addEventListener("scroll", () => updateDaysNavButtons(), { passive:true });
-
-    document.querySelectorAll(".sbtn[data-page]").forEach(btn => {
-      btn.addEventListener("click", () => setPage(btn.dataset.page));
-    });
-
     window.addEventListener("resize", () => {
       if(STATE.forecast) drawTempChart(STATE.forecast);
-      updateDaysNavButtons();
     });
 
+    // Tooltip hover on chart
     els.chart.addEventListener("mousemove", (e) => {
-      const pts = STATE.chartPoints;
+      const pts = els.chart.__points;
       if(!pts || !pts.length) return hideTooltip();
 
       const rect = els.chart.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
 
-      let best = null, bestD = Infinity;
+      let best = null;
+      let bestD = Infinity;
       for(const p of pts){
         const dx = mx - p.x;
         const dy = my - p.y;
         const d = dx*dx + dy*dy;
-        if(d < bestD){ bestD = d; best = p; }
+        if(d < bestD){
+          bestD = d;
+          best = p;
+        }
       }
+
       const radius = 14;
       if(best && bestD <= radius*radius){
         const d = new Date(best.time);
         const hh = String(d.getHours()).padStart(2,"0");
         const mm = String(d.getMinutes()).padStart(2,"0");
         showTooltip(best.x, best.y, `<b>${fmtTemp(best.t)}</b> • ${hh}:${mm}`);
-      } else hideTooltip();
+      }else{
+        hideTooltip();
+      }
     });
     els.chart.addEventListener("mouseleave", hideTooltip);
 
