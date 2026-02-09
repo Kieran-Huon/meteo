@@ -385,13 +385,6 @@
       return `${hh}:${mm}`;
     }
 
-    function fmtDayLabel(unix, tzOffsetSec){
-      const d = new Date((unix + tzOffsetSec) * 1000);
-      const day = d.toLocaleDateString("fr-FR", { weekday:"short" });
-      const dd = d.toLocaleDateString("fr-FR", { day:"2-digit", month:"short" });
-      return { day, dd };
-    }
-
     async function callApi(path, params){
       const url = new URL(path, location.origin);
       Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
@@ -439,13 +432,11 @@
           <button class="xbtn" title="Supprimer">✕</button>
         `;
 
-        // click to load
         item.addEventListener("click", (e) => {
           if(e.target.closest(".xbtn")) return;
           loadByCoords(f.lat, f.lon);
         });
 
-        // delete
         item.querySelector(".xbtn").addEventListener("click", (e) => {
           e.stopPropagation();
           const next = loadFavs().filter(x => x.key !== f.key);
@@ -484,11 +475,33 @@
     }
 
     // -----------------------------
+    // Open-Meteo: helpers
+    // -----------------------------
+    function labelDay(iso){
+      const d = new Date(iso);
+      const day = d.toLocaleDateString("fr-FR", { weekday:"short" });
+      const dd = d.toLocaleDateString("fr-FR", { day:"2-digit", month:"short" });
+      return { day, dd };
+    }
+
+    function wcToText(code){
+      if(code === 0) return "Ciel dégagé";
+      if([1,2,3].includes(code)) return "Nuageux";
+      if([45,48].includes(code)) return "Brouillard";
+      if([51,53,55,56,57].includes(code)) return "Bruine";
+      if([61,63,65,66,67].includes(code)) return "Pluie";
+      if([71,73,75,77].includes(code)) return "Neige";
+      if([80,81,82].includes(code)) return "Averses";
+      if([95,96,99].includes(code)) return "Orage";
+      return "—";
+    }
+
+    // -----------------------------
     // State + UI
     // -----------------------------
     const STATE = {
       current: null,
-      onecall: null,
+      forecast: null, // Open-Meteo data
     };
 
     function updateCurrentUI(data){
@@ -505,9 +518,7 @@
       els.temp.textContent = fmtTemp(data.main?.temp ?? 0);
       els.feels.textContent = `Ressenti ${fmtTemp(data.main?.feels_like ?? 0)}`;
 
-      els.metaLine.textContent =
-        `${data.sys?.country ?? "—"} • Heure locale ${localTime}`;
-
+      els.metaLine.textContent = `${data.sys?.country ?? "—"} • Heure locale ${localTime}`;
       els.pillLocal.textContent = `🕒 ${localTime}`;
 
       els.humidity.textContent = (data.main?.humidity != null) ? `${data.main.humidity}%` : "—";
@@ -519,47 +530,46 @@
       els.sunset.textContent = data.sys?.sunset ? fmtTimeFromUnix(data.sys.sunset, tz) : "—";
     }
 
-    function render7Days(onecall){
-      // onecall.daily : 8 jours (souvent), on prend 7 prochains (sans today si tu veux)
-      const daily = onecall.daily || [];
-      const tz = onecall.timezone_offset ?? 0;
-
+    function render7Days(forecast){
+      const daily = forecast.daily;
       els.daysGrid.innerHTML = "";
 
-      if(!daily.length){
+      if(!daily){
         els.daysGrid.innerHTML = `<div style="color:rgba(255,255,255,.65);font-size:13px;padding:10px">
-          Pas de données “daily”. (Si One Call n’est pas dispo sur ton plan, dis-moi et je te mets Open-Meteo.)
+          Pas de données “daily”.
         </div>`;
         return;
       }
 
-      const slice = daily.slice(1, 8); // demain -> J+7
-      els.daysHint.textContent = `${slice.length} jours`;
+      const times = daily.time || [];
+      const tmin = daily.temperature_2m_min || [];
+      const tmax = daily.temperature_2m_max || [];
+      const wc = daily.weathercode || [];
 
-      slice.forEach(d => {
-        const { day, dd } = fmtDayLabel(d.dt, tz);
+      els.daysHint.textContent = `${times.length} jours`;
+
+      for(let i=0;i<times.length;i++){
+        const { day, dd } = labelDay(times[i]);
         const el = document.createElement("div");
         el.className = "day";
         el.innerHTML = `
           <div class="d">${day}</div>
           <div class="m">${dd}</div>
           <div class="t">
-            <span>${fmtTemp(d.temp?.min ?? 0)}</span>
-            <span>${fmtTemp(d.temp?.max ?? 0)}</span>
+            <span>${fmtTemp(tmin[i] ?? 0)}</span>
+            <span>${fmtTemp(tmax[i] ?? 0)}</span>
           </div>
-          <div class="badge">${(d.weather?.[0]?.description ?? "—")}</div>
+          <div class="badge">${wcToText(wc[i])}</div>
         `;
         els.daysGrid.appendChild(el);
-      });
+      }
     }
 
     // -----------------------------
-    // Simple canvas line chart (no lib)
+    // Simple canvas line chart (Open-Meteo hourly)
     // -----------------------------
-    function drawTempChart(onecall){
-      const hourly = (onecall.hourly || []).slice(0, 24); // 24 prochaines heures
-      const tz = onecall.timezone_offset ?? 0;
-
+    function drawTempChart(forecast){
+      const h = forecast.hourly;
       const canvas = els.chart;
       const ctx = canvas.getContext("2d");
 
@@ -571,17 +581,27 @@
       canvas.width = Math.floor(cssW * dpr);
       canvas.height = Math.floor(cssH * dpr);
       ctx.setTransform(dpr,0,0,dpr,0,0);
-
       ctx.clearRect(0,0,cssW,cssH);
 
-      if(!hourly.length){
+      if(!h || !h.time || !h.temperature_2m){
         ctx.fillStyle = "rgba(255,255,255,.7)";
         ctx.font = "14px system-ui";
-        ctx.fillText("Pas de données “hourly”.", 14, 28);
+        ctx.fillText("Pas de données hourly.", 14, 28);
+        els.chartHint.textContent = "—";
         return;
       }
 
-      const temps = hourly.map(h => h.temp);
+      const times = h.time.slice(0, 24);
+      const temps = h.temperature_2m.slice(0, 24);
+
+      if(!temps.length){
+        ctx.fillStyle = "rgba(255,255,255,.7)";
+        ctx.font = "14px system-ui";
+        ctx.fillText("Pas de données hourly.", 14, 28);
+        els.chartHint.textContent = "—";
+        return;
+      }
+
       const minT = Math.min(...temps);
       const maxT = Math.max(...temps);
 
@@ -589,7 +609,7 @@
       const W = cssW, H = cssH;
       const x0 = pad, y0 = pad, x1 = W-pad, y1 = H-pad;
 
-      // grid lines
+      // grid
       ctx.strokeStyle = "rgba(255,255,255,.10)";
       ctx.lineWidth = 1;
       for(let i=0;i<=4;i++){
@@ -600,8 +620,7 @@
         ctx.stroke();
       }
 
-      // map function
-      const xFor = (i) => x0 + (i*(x1-x0)/(hourly.length-1));
+      const xFor = (i) => x0 + (i*(x1-x0)/(temps.length-1));
       const yFor = (t) => {
         const n = (t - minT) / ((maxT - minT) || 1);
         return y1 - n*(y1-y0);
@@ -611,9 +630,9 @@
       ctx.strokeStyle = "rgba(120,200,255,.9)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      hourly.forEach((h,i) => {
+      temps.forEach((t,i) => {
         const x = xFor(i);
-        const y = yFor(h.temp);
+        const y = yFor(t);
         if(i===0) ctx.moveTo(x,y);
         else ctx.lineTo(x,y);
       });
@@ -621,22 +640,21 @@
 
       // points
       ctx.fillStyle = "rgba(255,255,255,.9)";
-      hourly.forEach((h,i) => {
+      temps.forEach((t,i) => {
         const x = xFor(i);
-        const y = yFor(h.temp);
+        const y = yFor(t);
         ctx.beginPath();
         ctx.arc(x,y,3,0,Math.PI*2);
         ctx.fill();
       });
 
-      // labels (every 6 hours)
+      // labels every 6h
       ctx.fillStyle = "rgba(255,255,255,.75)";
       ctx.font = "12px system-ui";
-      for(let i=0;i<hourly.length;i+=6){
-        const h = hourly[i];
-        const hour = fmtTimeFromUnix(h.dt, tz);
-        const x = xFor(i);
-        ctx.fillText(hour, Math.max(6, x-14), H-8);
+      for(let i=0;i<times.length;i+=6){
+        const d = new Date(times[i]);
+        const hh = String(d.getHours()).padStart(2,"0");
+        ctx.fillText(`${hh}h`, Math.max(6, xFor(i)-10), H-8);
       }
 
       els.chartHint.textContent = `Min ${fmtTemp(minT)} • Max ${fmtTemp(maxT)}`;
@@ -646,20 +664,23 @@
     // Load flows
     // -----------------------------
     async function loadByCity(city){
+      const c = (city || "").trim();
+      if(!c) return setStatus("Entre une ville 🙂", true);
+
       setStatus("Chargement…");
       try{
-        const current = await callApi("/api/weather", { q: city });
+        const current = await callApi("/api/weather", { q: c });
         updateCurrentUI(current);
 
-        // One Call needs coords
         const lat = current.coord?.lat;
         const lon = current.coord?.lon;
 
-        const onecall = await callApi("/api/onecall", { lat: String(lat), lon: String(lon) });
-        STATE.onecall = onecall;
+        // Open-Meteo forecast (free)
+        const forecast = await callApi("/api/forecast", { lat: String(lat), lon: String(lon) });
+        STATE.forecast = forecast;
 
-        render7Days(onecall);
-        drawTempChart(onecall);
+        render7Days(forecast);
+        drawTempChart(forecast);
 
         renderFavs();
         setStatus("");
@@ -675,13 +696,13 @@
         const current = await callApi("/api/weather", { lat: String(lat), lon: String(lon) });
         updateCurrentUI(current);
 
-        const onecall = await callApi("/api/onecall", { lat: String(lat), lon: String(lon) });
-        STATE.onecall = onecall;
+        const forecast = await callApi("/api/forecast", { lat: String(lat), lon: String(lon) });
+        STATE.forecast = forecast;
 
-        render7Days(onecall);
-        drawTempChart(onecall);
+        render7Days(forecast);
+        drawTempChart(forecast);
 
-        renderFavs(`${current.name}|${current.sys?.country}|${lat.toFixed(4)}|${lon.toFixed(4)}`);
+        renderFavs(`${current.name}|${current.sys?.country}|${Number(lat).toFixed(4)}|${Number(lon).toFixed(4)}`);
         setStatus("");
       }catch(e){
         console.error(e);
@@ -720,7 +741,7 @@
     els.favBtn.addEventListener("click", addCurrentToFav);
 
     window.addEventListener("resize", () => {
-      if(STATE.onecall) drawTempChart(STATE.onecall);
+      if(STATE.forecast) drawTempChart(STATE.forecast);
     });
 
     // boot
