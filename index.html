@@ -212,7 +212,8 @@
     }
     .day .d{ color:rgba(255,255,255,.85); font-weight:900; font-size:13px; }
     .day .m{ color:var(--muted); font-size:12px; margin-top:4px; text-transform:capitalize;}
-    .day .t{ display:flex; justify-content:space-between; margin-top:10px; font-weight:900; }
+    .day .t{ display:flex; justify-content:center; margin-top:10px; font-weight:900; }
+
     .badge{
       display:inline-block;
       margin-top:10px;
@@ -226,6 +227,7 @@
 
     /* Chart */
     .chartBox{
+      position:relative;
       padding:14px;
       border:1px solid rgba(255,255,255,.12);
       border-radius: 16px;
@@ -241,6 +243,20 @@
       height:240px;
       display:block;
     }
+
+    .tooltip{
+      position:absolute;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.55);
+      color: rgba(255,255,255,.92);
+      font-size:12px;
+      pointer-events:none;
+      transform: translate(-50%, -120%);
+      white-space:nowrap;
+    }
+    .tooltip.hidden{ display:none; }
 
     .status{
       padding:10px 12px;
@@ -304,6 +320,7 @@
             <div class="pill" id="chartHint">—</div>
           </div>
           <canvas id="tempChart" width="900" height="300"></canvas>
+          <div id="chartTooltip" class="tooltip hidden"></div>
         </div>
 
         <div class="status" id="status">Prêt 🙂</div>
@@ -365,6 +382,7 @@
 
       chart: $("tempChart"),
       chartHint: $("chartHint"),
+      chartTooltip: $("chartTooltip"),
     };
 
     const LS_KEY = "weather_favs_v1";
@@ -550,23 +568,27 @@
 
       for(let i=0;i<times.length;i++){
         const { day, dd } = labelDay(times[i]);
+
+        const min = tmin[i];
+        const max = tmax[i];
+        const avg = (typeof min === "number" && typeof max === "number") ? (min + max) / 2 : null;
+
         const el = document.createElement("div");
         el.className = "day";
         el.innerHTML = `
           <div class="d">${day}</div>
           <div class="m">${dd}</div>
           <div class="t">
-            <span>${fmtTemp(tmin[i] ?? 0)}</span>
-            <span>${fmtTemp(tmax[i] ?? 0)}</span>
+            <span>${avg == null ? "—" : fmtTemp(avg)}</span>
           </div>
-          <div class="badge">${wcToText(wc[i])}</div>
+          <div class="badge">Moyenne • ${wcToText(wc[i])}</div>
         `;
         els.daysGrid.appendChild(el);
       }
     }
 
     // -----------------------------
-    // Simple canvas line chart (Open-Meteo hourly)
+    // Canvas chart with Y labels + hover tooltip
     // -----------------------------
     function drawTempChart(forecast){
       const h = forecast.hourly;
@@ -588,6 +610,7 @@
         ctx.font = "14px system-ui";
         ctx.fillText("Pas de données hourly.", 14, 28);
         els.chartHint.textContent = "—";
+        canvas.__points = null;
         return;
       }
 
@@ -599,32 +622,56 @@
         ctx.font = "14px system-ui";
         ctx.fillText("Pas de données hourly.", 14, 28);
         els.chartHint.textContent = "—";
+        canvas.__points = null;
         return;
       }
 
       const minT = Math.min(...temps);
       const maxT = Math.max(...temps);
 
-      const pad = 18;
-      const W = cssW, H = cssH;
-      const x0 = pad, y0 = pad, x1 = W-pad, y1 = H-pad;
+      // padding + place for Y axis labels
+      const padTop = 14;
+      const padRight = 14;
+      const padBottom = 20;
+      const padLeft = 44;
 
-      // grid
-      ctx.strokeStyle = "rgba(255,255,255,.10)";
-      ctx.lineWidth = 1;
-      for(let i=0;i<=4;i++){
-        const y = y0 + (i*(y1-y0)/4);
-        ctx.beginPath();
-        ctx.moveTo(x0, y);
-        ctx.lineTo(x1, y);
-        ctx.stroke();
-      }
+      const W = cssW, H = cssH;
+      const x0 = padLeft, y0 = padTop, x1 = W-padRight, y1 = H-padBottom;
 
       const xFor = (i) => x0 + (i*(x1-x0)/(temps.length-1));
       const yFor = (t) => {
         const n = (t - minT) / ((maxT - minT) || 1);
         return y1 - n*(y1-y0);
       };
+
+      // grid + y labels
+      ctx.strokeStyle = "rgba(255,255,255,.10)";
+      ctx.lineWidth = 1;
+
+      const ticks = 5;
+      ctx.fillStyle = "rgba(255,255,255,.70)";
+      ctx.font = "12px system-ui";
+      for(let i=0;i<ticks;i++){
+        const p = i/(ticks-1);
+        const t = maxT - p*(maxT-minT);
+        const y = y0 + p*(y1-y0);
+
+        ctx.beginPath();
+        ctx.moveTo(x0, y);
+        ctx.lineTo(x1, y);
+        ctx.stroke();
+
+        ctx.fillText(`${Math.round(t)}°`, 8, y + 4);
+      }
+
+      // x labels every 6h
+      ctx.fillStyle = "rgba(255,255,255,.75)";
+      ctx.font = "12px system-ui";
+      for(let i=0;i<times.length;i+=6){
+        const d = new Date(times[i]);
+        const hh = String(d.getHours()).padStart(2,"0");
+        ctx.fillText(`${hh}h`, Math.max(x0, xFor(i)-10), H-6);
+      }
 
       // line
       ctx.strokeStyle = "rgba(120,200,255,.9)";
@@ -638,26 +685,28 @@
       });
       ctx.stroke();
 
-      // points
-      ctx.fillStyle = "rgba(255,255,255,.9)";
-      temps.forEach((t,i) => {
-        const x = xFor(i);
-        const y = yFor(t);
+      // points + store for hover
+      const points = temps.map((t,i) => ({ i, t, x: xFor(i), y: yFor(t), time: times[i] }));
+
+      ctx.fillStyle = "rgba(255,255,255,.92)";
+      points.forEach(p => {
         ctx.beginPath();
-        ctx.arc(x,y,3,0,Math.PI*2);
+        ctx.arc(p.x,p.y,3,0,Math.PI*2);
         ctx.fill();
       });
 
-      // labels every 6h
-      ctx.fillStyle = "rgba(255,255,255,.75)";
-      ctx.font = "12px system-ui";
-      for(let i=0;i<times.length;i+=6){
-        const d = new Date(times[i]);
-        const hh = String(d.getHours()).padStart(2,"0");
-        ctx.fillText(`${hh}h`, Math.max(6, xFor(i)-10), H-8);
-      }
-
       els.chartHint.textContent = `Min ${fmtTemp(minT)} • Max ${fmtTemp(maxT)}`;
+      canvas.__points = points;
+    }
+
+    function showTooltip(x, y, html){
+      els.chartTooltip.innerHTML = html;
+      els.chartTooltip.style.left = x + "px";
+      els.chartTooltip.style.top = y + "px";
+      els.chartTooltip.classList.remove("hidden");
+    }
+    function hideTooltip(){
+      els.chartTooltip.classList.add("hidden");
     }
 
     // -----------------------------
@@ -743,6 +792,39 @@
     window.addEventListener("resize", () => {
       if(STATE.forecast) drawTempChart(STATE.forecast);
     });
+
+    // Tooltip hover on chart
+    els.chart.addEventListener("mousemove", (e) => {
+      const pts = els.chart.__points;
+      if(!pts || !pts.length) return hideTooltip();
+
+      const rect = els.chart.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+
+      let best = null;
+      let bestD = Infinity;
+      for(const p of pts){
+        const dx = mx - p.x;
+        const dy = my - p.y;
+        const d = dx*dx + dy*dy;
+        if(d < bestD){
+          bestD = d;
+          best = p;
+        }
+      }
+
+      const radius = 14;
+      if(best && bestD <= radius*radius){
+        const d = new Date(best.time);
+        const hh = String(d.getHours()).padStart(2,"0");
+        const mm = String(d.getMinutes()).padStart(2,"0");
+        showTooltip(best.x, best.y, `<b>${fmtTemp(best.t)}</b> • ${hh}:${mm}`);
+      }else{
+        hideTooltip();
+      }
+    });
+    els.chart.addEventListener("mouseleave", hideTooltip);
 
     // boot
     renderFavs();
